@@ -59,6 +59,12 @@ def count_ra(cnt, slot, msg):
 	send_update("-action", slot, ra[slot], ra_tags)
 
 
+def send_reset():
+	for slot in (0, 1):
+		send_update("", slot, rr[slot], rr_tags)
+		send_update("-action", slot, ra[slot], ra_tags)
+
+
 def message(topic, msg):
 	m = re.compile("^/mine/([01])/reset(|-count)$").match(topic)
 	if m:
@@ -82,6 +88,7 @@ def on_connect(client, userdata, flags, rc):
 #       print("on_connect: rc = " + str(rc), file = sys.stderr)
 	mqtt.subscribe("/mine/+/reset", 2)
 	mqtt.subscribe("/mine/+/reset-action", 2)
+	send_reset()
 
 
 parser = argparse.ArgumentParser()
@@ -100,6 +107,7 @@ for slot in (0, 1):
 		ra[slot][tag] = 0
 
 if tests:
+	send_reset()
 	for test in tests:
 		m = re.compile("^(/.*?):(.*)").match(test)
 		if m is None:
