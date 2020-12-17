@@ -1,0 +1,113 @@
+#!/usr/bin/python3
+
+import sys, os, re, paho.mqtt.client
+import traceback, argparse
+
+
+tests = None
+rr = []
+ra = []
+
+rr_tags = ("H", "L", "P", "I", "U")
+ra_tags = ("Q", "S", "D", "M", "U")
+
+
+def mqtt_pub(topic, payload = None, qos = 0, retain = False):
+	if tests:
+		print("MQTT " + topic + ": " + payload)
+	else:
+		mqtt.publish(topic, payload, qos, retain)
+
+
+def send_update(type, slot, a, tags):
+	s = ""
+	for tag in tags:
+		if s != "":
+			s += " "
+		s += tag + ":" + str(a[tag])
+	mqtt_pub("/mine/" + str(slot) + "/reset" + type + "-count",
+	    s, 1, True)
+
+
+def count_rr(slot, msg):
+	if msg == "high":
+		tag = "H"
+	elif msg == "low":
+		tag = "L"
+	elif msg == "perf":
+		tag = "P"
+	elif msg == "invalid":
+		tag = "I"
+	else:
+		tag = "U"
+	rr[slot][tag] += 1
+	send_update("", slot, rr[slot], rr_tags)
+	
+
+def count_ra(cnt, slot, msg):
+	if msg == "quick":
+		tag = "Q"
+	elif msg == "serdes":
+		tag = "S"
+	elif msg == "dag":
+		tag = "D"
+	elif msg == "mined":
+		tag = "M"
+	else:
+		tag = "U"
+	ra[slot][tag] += 1
+	send_update("-action", slot, ra[slot], ra_tags)
+
+
+def message(topic, msg):
+	m = re.compile("^/mine/([01])/reset(|-count)$").match(topic)
+	if m:
+		if m[2] == "":
+			count_rr(int(m[1]), msg)
+		else:
+			count_ra(int(m[1]), msg)
+	else:
+		raise Exception('don\'t know what to do with topic "' +
+		    topic + '"')
+
+	
+def on_message(client, userdata, msg):
+	try:
+		message(msg.topic, msg.payload.decode("ascii"))
+	except Exception as e:
+		traceback.print_exc()
+
+
+def on_connect(client, userdata, flags, rc):
+#       print("on_connect: rc = " + str(rc), file = sys.stderr)
+	mqtt.subscribe("/mine/+/reset", 2)
+	mqtt.subscribe("/mine/+/reset-action", 2)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--test", type = str, nargs = "+",
+    help = "dry-run, processing topic:payload message")
+
+args = parser.parse_args()
+tests = args.test
+
+for slot in (0, 1):
+	rr.append({})
+	for tag in rr_tags:
+		rr[slot][tag] = 0
+	ra.append({})
+	for tag in ra_tags:
+		ra[slot][tag] = 0
+
+if tests:
+	for test in tests:
+		m = re.compile("^(/.*?):(.*)").match(test)
+		if m is None:
+			raise Exception('"' + test + '" is not topic:payload')
+		message(m[1], m[2])	
+else:
+	mqtt = paho.mqtt.client.Client()
+	mqtt.on_connect = on_connect;
+	mqtt.on_message = on_message;
+	mqtt.connect("localhost")
+	mqtt.loop_forever()

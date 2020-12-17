@@ -1,0 +1,9 @@
+statsd - Statistics-gathering and processing daemon
+===================================================
+
+statsd collects statistics (from MQTT) that need some processing before
+passing them on, and publishes the processed results (to MQTT).
+
+An example would be the counting of events, so that the Web user interface
+can directly access the counts instead of having to maintain them in the
+less stable browser context.
