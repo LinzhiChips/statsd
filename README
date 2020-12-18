@@ -7,3 +7,19 @@ passing them on, and publishes the processed results (to MQTT).
 An example would be the counting of events, so that the Web user interface
 can directly access the counts instead of having to maintain them in the
 less stable browser context.
+
+
+Invocation
+----------
+
+statsd [-t topic:payload ...] [-v]
+
+-t topic:payload ...
+
+    Process the topic:payload arguments as if they were incoming MQTT
+    messages and print the messages statds would send.
+
+-v  Enable verbose operation: print incoming and outgoing MQTT messages.
+
+
+Note that statsd does not background on its own. Use  statsd &
