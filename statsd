@@ -71,7 +71,8 @@ def send_reset():
 
 
 def message(topic, msg):
-	print("MQTT IN " + topic + ": " + msg, file = sys.stderr)
+	if verbose:
+		print("MQTT IN " + topic + ": " + msg, file = sys.stderr)
 	m = re.compile("^/mine/([01])/reset(|-action)$").match(topic)
 	if m:
 		if m[2] == "":
