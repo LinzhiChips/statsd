@@ -1,4 +1,12 @@
 #!/usr/bin/python3
+#
+# statds - Statistics-gathering and processing daemon
+#
+# Copyright (C) 2021 Linzhi Ltd.
+#
+# This work is licensed under the terms of the MIT License.
+# A copy of the license can be found in the file COPYING.txt
+#
 
 import sys, os, re, paho.mqtt.client
 import traceback, argparse
