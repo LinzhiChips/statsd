@@ -15,11 +15,7 @@ import traceback, argparse
 tests = None
 verbose = False
 
-rr = []
-ra = []
-
-rr_tags = ("H", "L", "P", "I", "U")
-ra_tags = ("Q", "S", "D", "M", "U")
+# --- MQTT helper functions --------------------------------------------------
 
 
 def mqtt_pub(topic, payload = None, qos = 0, retain = False):
@@ -30,6 +26,16 @@ def mqtt_pub(topic, payload = None, qos = 0, retain = False):
 			print("MQTT OUT " + topic + ": " + payload,
 			    file = sys.stderr)
 		mqtt.publish(topic, payload, qos, retain)
+
+
+# --- Mined resets ------------------------------------------------------------
+
+
+rr = []
+ra = []
+
+rr_tags = ("H", "L", "P", "I", "U")
+ra_tags = ("Q", "S", "D", "M", "U")
 
 
 def send_update(type, slot, a, tags):
@@ -78,6 +84,9 @@ def send_reset():
 		send_update("-action", slot, ra[slot], ra_tags)
 
 
+# --- MQTT callbacks and message dispatch -------------------------------------
+
+
 def message(topic, msg):
 	if verbose:
 		print("MQTT IN " + topic + ": " + msg, file = sys.stderr)
@@ -104,6 +113,9 @@ def on_connect(client, userdata, flags, rc):
 	mqtt.subscribe("/mine/+/reset", 2)
 	mqtt.subscribe("/mine/+/reset-action", 2)
 	send_reset()
+
+
+# --- Command-line processing and main loop -----------------------------------
 
 
 parser = argparse.ArgumentParser()
